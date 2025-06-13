@@ -1,0 +1,47 @@
+package com.soprasteria.model;
+
+import java.math.*;
+
+dialect "java"
+
+function BigDecimal beregnDaekningsafgift( BigDecimal forskelsvaerdi, BigDecimal fritagelse, int grundskyldspromille ){
+    BigDecimal regel50000 = BigDecimal.valueOf(50000);
+    BigDecimal k1 = BigDecimal.valueOf(1000); // for at få promillen til at være per tusinde
+    BigDecimal promille = BigDecimal.valueOf(grundskyldspromille);
+    return (forskelsvaerdi.subtract(fritagelse).subtract(regel50000)).multiply(promille).divide(k1, RoundingMode.FLOOR);
+}
+
+
+rule "#1 Af ejendomme, der delvis anvendes som anført, svares dækningsafgift dog kun, når den del af forskelsværdien, der vedrører den til de nævnte formål anvendte del af ejendommen, udgør mere end halvdelen af forskelsværdien for hele ejendommen"
+no-loop
+when
+    $ejendom: Ejendom(ejendomsType == EjendomsType.AAR2, forskelsvaerdiAnvendt > forskelsvaerdi / 2)
+then
+    $ejendom.addRule(drools.getRule().getName());
+    System.out.println("#1 ");
+    modify($ejendom) { // "modify" eller "update" sørger for at data bliver evalueret igen.
+        setMereEnd50ProcentErhverv(Boolean.TRUE);
+    }
+end
+
+rule "#2 Genberegn dækningsafgift af forskelsværdien for skatteår 2016-2021 år 2 ejendomme erhverv."
+no-loop
+when
+    $ejendom: Ejendom(ejendomsType == EjendomsType.AAR2,
+        mereEnd50ProcentErhverv,
+        skatteAar >= 2016 && skatteAar <= 2021
+    );
+    $kommune: KommuneAarsInformation(kommuneKode == $ejendom.kommuneKode, aar == $ejendom.skatteAar, opkraevDaekningsafgift);
+
+then
+//Ejendommens forskelsværdi modtages fra VUR og ganges med dækningsafgiftspromillen som
+// er besluttet af beliggenhedskommunen for skatteåret, max 10 promille. Forskelsværdien er omfattet
+// af forsigtighedsprincip på 20% (fra 2018).
+// Systemet skal kun beregne dækningsafgift for de kommuner, som før skatteåret har vedtaget at
+// opkræve dækningsafgift.
+    $ejendom.addRule(drools.getRule().getName());
+    $ejendom.setDaekningsafgift(beregnDaekningsafgift($ejendom.getForskelsvaerdi(), $ejendom.getFritagelse(), $kommune.getGrundskyldspromille()));
+    System.out.println("#2 ");
+end
+
+
