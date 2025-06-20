@@ -44,7 +44,7 @@ public class StepDefinitions {
         rc.executeRules(this.ejendom, List.of(this.kommuneAarsInformation));
     }
 
-    @Then("så er dækningsafgiften {bigdecimal}")
+    @Then("er dækningsafgiften {bigdecimal}")
     public void daekningsafgift(BigDecimal da) {
         assertEquals(da, ejendom.getDaekningsafgift());
     }
