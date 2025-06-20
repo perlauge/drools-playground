@@ -23,31 +23,12 @@ import org.slf4j.LoggerFactory;
 class MyTest {
     static final Logger LOG = LoggerFactory.getLogger(MyTest.class);
 
-    KieServices kieServices;
-
-    KieContainer kContainer;
-    KieBase kieBase;
+    RuleContext ruleContext;
 
     @BeforeEach
     void init() {
-        kieServices = KieServices.Factory.get();
-
-        kContainer = kieServices.getKieClasspathContainer();
-        Results verifyResults = kContainer.verify();
-        for (Message m : verifyResults.getMessages()) {
-            LOG.info("{}", m);
-        }
-
-        LOG.info("Creating kieBase");
-        kieBase = kContainer.getKieBase();
-
-        LOG.info("There should be rules: ");
-        for (KiePackage kp : kieBase.getKiePackages()) {
-            for (Rule rule : kp.getRules()) {
-                LOG.info("kp {} rule {}", kp, rule.getName());
-            }
-        }
-
+        ruleContext = new RuleContext();
+        ruleContext.init();
     }
 
     @Test
@@ -64,7 +45,7 @@ class MyTest {
                 .grundskyldspromille(3)
                 .opkraevDaekningsafgift(false).build());
 
-        executeRules(ejendom, kommuneAarsInformationer);
+        ruleContext.executeRules(ejendom, kommuneAarsInformationer);
 
         assertFalse(ejendom.isMereEnd50ProcentErhverv());
         LOG.info("rules executed for ejendom {}", ejendom);
@@ -93,7 +74,7 @@ class MyTest {
                 .grundskyldspromille(2)
                 .opkraevDaekningsafgift(true).build());
 
-        executeRules(ejendom, kommuneAarsInformationer);
+        ruleContext.executeRules(ejendom, kommuneAarsInformationer);
 
         assertTrue(ejendom.isMereEnd50ProcentErhverv());
         assertEquals(BigDecimal.valueOf(2250), ejendom.getDaekningsafgift());
@@ -113,30 +94,5 @@ class MyTest {
         ejendom.setForskelsvaerdi(ejendom.getEjendomsvaerdi().subtract(ejendom.getGrundvaerdi()));
         return ejendom;
     }
-
-
-    private KieSession getSession() {
-        LOG.info("Creating kieSession");
-        return kieBase.newKieSession();
-    }
-
-    public void executeRules(Ejendom ejendom, List<KommuneAarsInformation> kommuneAarsInformationer) {
-        KieSession session = getSession();
-        TrackingAgendaEventListener agendaEventListener = new TrackingAgendaEventListener();
-
-        session.addEventListener(agendaEventListener);
-        session.insert(ejendom);
-        kommuneAarsInformationer.forEach(session::insert);
-        LOG.info("firing all Rules");
-        session.fireAllRules();
-        LOG.info("");
-        LOG.info("activations: {}", agendaEventListener.getMatchList());
-        List<Match> activations = agendaEventListener.getMatchList();
-        for (Match match : activations) {
-            LOG.info("match: {}", match);
-        }
-
-    }
-
 
 }

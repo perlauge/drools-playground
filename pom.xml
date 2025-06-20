@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.soprasteria</groupId>
-	<artifactId>drools-of-lifes</artifactId>
+	<artifactId>drools-playground</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>drools-test</name>
+	<name>drools-playground</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,6 +17,7 @@
 		<slf4j-version>2.0.17</slf4j-version>
 		<junit-version>5.10.2</junit-version>
 		<lombok.version>1.18.38</lombok.version>
+		<cucumber.version>7.23.0</cucumber.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
@@ -57,6 +58,12 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>${slf4j-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-java</artifactId>
+			<version>${cucumber.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
